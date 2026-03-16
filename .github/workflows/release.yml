@@ -7,16 +7,28 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          # List available Xcode versions and select the latest
+          ls /Applications/ | grep Xcode
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Using: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          xcodebuild -version
 
       - name: Install tools
         run: |
           brew install xcodegen create-dmg
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          # Regenerate project with the runner's Xcode version
+          rm -rf ClaudeUsage.xcodeproj
+          xcodegen generate
 
       - name: Build Release
         run: |
@@ -66,23 +78,30 @@ jobs:
           body: |
             ## Installation
 
+            ### Homebrew (recommended)
+            ```bash
+            brew tap eylonshm/tap
+            brew install --cask claude-usage-widget
+            ```
+
+            ### Manual DMG
             1. Download `ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg`
             2. Open the DMG and drag **Claude Usage** to your Applications folder
             3. Since the app is not notarized, macOS will block it on first launch. To open it:
 
-            **Option A — Right-click method (easiest):**
+            **Option A -- Right-click method (easiest):**
             - Right-click (or Control-click) on **Claude Usage** in Applications
             - Select **Open** from the context menu
             - Click **Open** in the dialog that appears
             - You only need to do this once
 
-            **Option B — System Settings:**
+            **Option B -- System Settings:**
             - Try to open the app normally (it will be blocked)
-            - Go to **System Settings → Privacy & Security**
+            - Go to **System Settings > Privacy & Security**
             - Scroll down to find the message about "Claude Usage" being blocked
             - Click **Open Anyway**
 
-            **Option C — Terminal (removes quarantine flag):**
+            **Option C -- Terminal (removes quarantine flag):**
             ```bash
             xattr -cr /Applications/Claude\ Usage.app
             ```
