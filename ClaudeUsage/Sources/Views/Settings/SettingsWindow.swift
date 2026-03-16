@@ -273,7 +273,7 @@ struct SettingsTab: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            AppDelegate.shared?.updaterController.updater.checkForUpdates(nil)
+                            AppDelegate.shared?.updaterController.updater.checkForUpdates()
                         }) {
                             HStack(spacing: 4) {
                                 Image(systemName: "arrow.down.circle")
