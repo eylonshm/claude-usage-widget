@@ -266,6 +266,31 @@ struct SettingsTab: View {
                     }
                 }
                 .glassCard(cornerRadius: 12)
+
+                // Updates
+                VStack(alignment: .leading, spacing: 8) {
+                    SectionHeader(title: "Updates")
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            AppDelegate.shared?.updaterController.updater.checkForUpdates(nil)
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.down.circle")
+                                Text("Check for Updates")
+                            }
+                            .font(ThemeTypography.caption)
+                            .foregroundColor(colors.accent)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.white.opacity(0.02), in: Capsule())
+                            .overlay(Capsule().stroke(Color.white.opacity(0.04), lineWidth: 0.5))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.top, 4)
+                }
+                .glassCard(cornerRadius: 12)
             }
             .padding(20)
         }

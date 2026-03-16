@@ -76,6 +76,53 @@ jobs:
             -ov -format UDZO \
             "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
 
+      - name: Install Sparkle tools
+        run: |
+          SPARKLE_VERSION="2.7.0"
+          curl -sL "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VERSION}/Sparkle-${SPARKLE_VERSION}.tar.xz" -o /tmp/sparkle.tar.xz
+          tar -xf /tmp/sparkle.tar.xz -C /tmp ./bin/generate_appcast ./bin/sign_update
+          chmod +x /tmp/bin/generate_appcast /tmp/bin/sign_update
+
+      - name: Generate appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          DMG_PATH="dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+          DMG_URL="https://github.com/eylonshm/claude-usage-widget/releases/download/${{ github.ref_name }}/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+
+          # Sign the DMG and capture the EdDSA signature
+          SIGNATURE=$(/tmp/bin/sign_update "$DMG_PATH" "$SPARKLE_PRIVATE_KEY")
+          LENGTH=$(wc -c < "$DMG_PATH" | tr -d ' ')
+
+          cat > appcast.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+            <channel>
+              <title>Claude Usage Widget</title>
+              <item>
+                <title>Version ${{ steps.version.outputs.VERSION }}</title>
+                <sparkle:version>${{ steps.version.outputs.VERSION }}</sparkle:version>
+                <sparkle:shortVersionString>${{ steps.version.outputs.VERSION }}</sparkle:shortVersionString>
+                <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+                <pubDate>$(date -u "+%a, %d %b %Y %H:%M:%S +0000")</pubDate>
+                <enclosure
+                  url="${DMG_URL}"
+                  sparkle:edSignature="${SIGNATURE}"
+                  length="${LENGTH}"
+                  type="application/octet-stream"/>
+              </item>
+            </channel>
+          </rss>
+          EOF
+
+      - name: Commit appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "chore: update appcast for ${{ github.ref_name }}"
+          git push origin HEAD:main
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

@@ -6,6 +6,11 @@ options:
   xcodeVersion: "16.0"
   createIntermediateGroups: true
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    version: 2.7.0
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -28,6 +33,9 @@ targets:
       properties:
         LSUIElement: true
         CFBundleDisplayName: Claude Usage
+        SUFeedURL: https://raw.githubusercontent.com/eylonshm/claude-usage-widget/main/appcast.xml
+        SUPublicEDKey: /wx7c+JEZuhhQj1p0ULc87qrTGz9irqpwXDSz2BL2VI=
+        SUEnableAutomaticChecks: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.claudeusage.app
@@ -35,6 +43,9 @@ targets:
         PRODUCT_NAME: Claude Usage
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     entitlements:
       path: ClaudeUsage/Resources/ClaudeUsage.entitlements
       properties:

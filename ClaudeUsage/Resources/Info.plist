@@ -22,5 +22,11 @@
 	<string>1</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/eylonshm/claude-usage-widget/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>/wx7c+JEZuhhQj1p0ULc87qrTGz9irqpwXDSz2BL2VI=</string>
 </dict>
 </plist>

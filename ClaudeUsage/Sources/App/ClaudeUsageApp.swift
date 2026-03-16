@@ -1,5 +1,6 @@
 import SwiftUI
 import ServiceManagement
+import Sparkle
 
 @main
 struct ClaudeUsageApp: App {
@@ -70,7 +71,14 @@ struct ClaudeUsageApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    static weak var shared: AppDelegate?
+    var updaterController: SPUStandardUpdaterController!
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
+
+        updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+
         let settings = AppSettings.shared
         let isFirstLaunch = !UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
 
