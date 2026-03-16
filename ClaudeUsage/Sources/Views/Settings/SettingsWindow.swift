@@ -71,19 +71,6 @@ struct UsageTab: View {
                     .glassCard(cornerRadius: 12)
                 }
 
-                // Period Stats
-                VStack(alignment: .leading, spacing: 8) {
-                    SectionHeader(title: "Today")
-                    statsGrid(service.todayStats)
-                    SectionDivider()
-                    SectionHeader(title: "This Week")
-                    statsGrid(service.weekStats)
-                    SectionDivider()
-                    SectionHeader(title: "This Month")
-                    statsGrid(service.monthStats)
-                }
-                .glassCard(cornerRadius: 12)
-
                 // Model Breakdown
                 if !service.modelBreakdowns.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
