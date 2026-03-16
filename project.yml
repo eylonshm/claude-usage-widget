@@ -33,6 +33,8 @@ targets:
       properties:
         LSUIElement: true
         CFBundleDisplayName: Claude Usage
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         SUFeedURL: https://raw.githubusercontent.com/eylonshm/claude-usage-widget/main/appcast.xml
         SUPublicEDKey: /wx7c+JEZuhhQj1p0ULc87qrTGz9irqpwXDSz2BL2VI=
         SUEnableAutomaticChecks: true
@@ -41,7 +43,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.claudeusage.app
         CODE_SIGN_ENTITLEMENTS: ClaudeUsage/Resources/ClaudeUsage.entitlements
         PRODUCT_NAME: Claude Usage
-        MARKETING_VERSION: "1.2.1"
+        MARKETING_VERSION: "1.2.2"
         CURRENT_PROJECT_VERSION: "1"
     dependencies:
       - package: Sparkle
@@ -66,7 +68,7 @@ targets:
           NSExtension={NSExtensionPointIdentifier=com.apple.widgetkit-extension;}
         CODE_SIGN_ENTITLEMENTS: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
         PRODUCT_NAME: ClaudeUsageWidgetExtension
-        MARKETING_VERSION: "1.2.1"
+        MARKETING_VERSION: "1.2.2"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: true
     entitlements:

@@ -21,7 +21,10 @@ cp ClaudeUsage/Resources/fetch-quota.sh "build/Claude Usage.app/Contents/Resourc
 chmod +x "build/Claude Usage.app/Contents/Resources/fetch-quota.sh"
 
 pkill -x "Claude Usage" 2>/dev/null || true
-sleep 1
+sleep 2
+rm -rf "/Applications/Claude Usage.app"
 cp -R "build/Claude Usage.app" "/Applications/Claude Usage.app"
 open "/Applications/Claude Usage.app"
 ```
+
+Note: always `rm -rf` the old app before copying — a plain `cp -R` over an existing `.app` will silently leave stale files.
