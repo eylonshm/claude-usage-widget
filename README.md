@@ -32,46 +32,91 @@ A native macOS app that shows your Claude Code usage and quota data in desktop w
 
 The app reads usage data from two sources:
 
-1. **`~/.claude/stats-cache.json`** — Local stats cache maintained by Claude Code (daily activity, token counts by model, lifetime stats)
-2. **`claude /usage` command** — Live quota data (session %, weekly % for all models, weekly % Sonnet only, reset times) extracted by spawning a brief CLI session
+1. **`~/.claude/stats-cache.json`** -- Local stats cache maintained by Claude Code (daily activity, token counts by model, lifetime stats)
+2. **`claude /usage` command** -- Live quota data (session %, weekly % for all models, weekly % Sonnet only, reset times) extracted by spawning a brief CLI session
 
 No API keys, no OAuth, no cloud services. Everything is local.
 
 ## Requirements
 
 - **macOS 14 (Sonoma)** or later
-- **Claude Code CLI** installed and authenticated (`brew install claude` or download from [claude.ai/code](https://claude.ai/code))
-- **Xcode 15+** (to build from source)
+- **Claude Code CLI** installed and authenticated ([claude.ai/code](https://claude.ai/code))
 
 ## Installation
 
-### Build from Source
+### Option 1: Download DMG (Recommended)
+
+1. Go to the [Releases](https://github.com/eylonshm/claude-usage-widget/releases) page
+2. Download `ClaudeUsage-x.x.x.dmg`
+3. Open the DMG and drag **Claude Usage** to your Applications folder
+
+#### Opening the App (Gatekeeper)
+
+Since this app is not notarized by Apple, macOS will block it on first launch. This is normal for open-source apps. Choose one of these methods:
+
+**Method A -- Right-click (easiest):**
+1. Open **Finder** and go to **Applications**
+2. **Right-click** (or Control-click) on **Claude Usage**
+3. Select **Open** from the context menu
+4. In the dialog that appears, click **Open**
+5. You only need to do this once -- subsequent launches work normally
+
+**Method B -- System Settings:**
+1. Try to open the app normally (it will be blocked)
+2. Open **System Settings** -> **Privacy & Security**
+3. Scroll down to find the message about "Claude Usage" being blocked
+4. Click **Open Anyway**
+5. Enter your password when prompted
+
+**Method C -- Terminal (removes quarantine):**
+```bash
+xattr -cr /Applications/Claude\ Usage.app
+```
+Then open the app normally.
+
+### Option 2: Build from Source
 
 ```bash
+# Prerequisites: Xcode 15+, xcodegen
+brew install xcodegen
+
+# Clone and build
 git clone https://github.com/eylonshm/claude-usage-widget.git
 cd claude-usage-widget
 xcodegen generate
 open ClaudeUsage.xcodeproj
 ```
 
-Then build and run from Xcode (Cmd+R).
+Build and run from Xcode (Cmd+R).
 
-### Adding Desktop Widgets
+#### Build DMG Locally
 
-1. Right-click on your desktop
-2. Select "Edit Widgets..."
-3. Search for "Claude Usage"
-4. Drag a widget (Small, Medium, or Large) to your desktop
+```bash
+brew install create-dmg
+./scripts/build-dmg.sh 1.0.0
+# Output: dist/ClaudeUsage-1.0.0.dmg
+```
+
+## Getting Started
+
+1. **Install the app** using one of the methods above
+2. The app appears as a **sparkle icon** in your menu bar with your weekly quota percentage
+3. **Click the menu bar icon** to see the full usage dropdown
+4. **Add desktop widgets**: Right-click desktop -> Edit Widgets -> Search "Claude Usage"
+5. **Open Settings**: Click the gear icon in the dropdown to customize
 
 ## Configuration
 
 Open the Settings window from the menu bar dropdown (gear icon):
 
-- **Refresh Interval**: 5, 10, 15, or 30 minutes
-- **Warning Threshold**: Percentage at which progress bars turn coral (default: 80%)
-- **Colors**: Full customization of background, surface, primary, accent, text, muted, and warning colors
-- **Launch at Login**: Auto-start on login
-- **CLI Path**: Override auto-detected Claude CLI path
+| Setting | Options | Default |
+|---------|---------|---------|
+| Refresh Interval | 5, 10, 15, 30 minutes | 10 min |
+| Warning Threshold | 50-100% | 80% |
+| Launch at Login | On/Off | Off |
+| Show Menu Bar | On/Off | On |
+| Colors | Full palette customization | Claude Code theme |
+| CLI Path | Auto-detected or manual | Auto |
 
 ## Project Structure
 
@@ -88,16 +133,26 @@ ClaudeUsage/
     Theme/         -- Design system (colors, typography, settings)
 ClaudeUsageWidget/
   Sources/         -- WidgetKit extension (Small, Medium, Large widgets)
+scripts/
+  build-dmg.sh     -- Build script for creating DMG installer
 ```
 
 ## Tech Stack
 
-- **SwiftUI** — All UI
-- **WidgetKit** — Desktop widgets
-- **MenuBarExtra** — Menu bar integration
-- **PTY/Process** — CLI interaction for quota data
-- **App Groups** — Data sharing between app and widget extension
-- **XcodeGen** — Project generation from `project.yml`
+- **SwiftUI** -- All UI
+- **WidgetKit** -- Desktop widgets
+- **MenuBarExtra** -- Menu bar integration
+- **PTY/Process** -- CLI interaction for quota data
+- **App Groups** -- Data sharing between app and widget extension
+- **XcodeGen** -- Project generation from `project.yml`
+
+## Contributing
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feat/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feat/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 

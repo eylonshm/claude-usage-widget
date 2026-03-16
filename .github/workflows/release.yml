@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          brew install xcodegen create-dmg
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build Release
+        run: |
+          xcodebuild \
+            -project ClaudeUsage.xcodeproj \
+            -scheme ClaudeUsage \
+            -configuration Release \
+            build \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=NO \
+            CONFIGURATION_BUILD_DIR="$(pwd)/build"
+
+      - name: Embed widget extension
+        run: |
+          mkdir -p "build/Claude Usage.app/Contents/PlugIns"
+          cp -R "build/ClaudeUsageWidgetExtension.appex" "build/Claude Usage.app/Contents/PlugIns/"
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Create DMG
+        run: |
+          mkdir -p dist
+          create-dmg \
+            --volname "Claude Usage" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Claude Usage.app" 175 190 \
+            --hide-extension "Claude Usage.app" \
+            --app-drop-link 425 190 \
+            --no-internet-enable \
+            "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg" \
+            "build/Claude Usage.app" || \
+          hdiutil create \
+            -volname "Claude Usage" \
+            -srcfolder "build/Claude Usage.app" \
+            -ov -format UDZO \
+            "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ClaudeUsage-*.dmg
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            1. Download `ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg`
+            2. Open the DMG and drag **Claude Usage** to your Applications folder
+            3. Since the app is not notarized, macOS will block it on first launch. To open it:
+
+            **Option A — Right-click method (easiest):**
+            - Right-click (or Control-click) on **Claude Usage** in Applications
+            - Select **Open** from the context menu
+            - Click **Open** in the dialog that appears
+            - You only need to do this once
+
+            **Option B — System Settings:**
+            - Try to open the app normally (it will be blocked)
+            - Go to **System Settings → Privacy & Security**
+            - Scroll down to find the message about "Claude Usage" being blocked
+            - Click **Open Anyway**
+
+            **Option C — Terminal (removes quarantine flag):**
+            ```bash
+            xattr -cr /Applications/Claude\ Usage.app
+            ```
+
+            ## Requirements
+            - macOS 14 (Sonoma) or later
+            - [Claude Code CLI](https://claude.ai/code) installed and authenticated
