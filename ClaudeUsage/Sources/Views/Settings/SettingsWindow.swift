@@ -118,19 +118,27 @@ struct UsageTab: View {
 
     @ViewBuilder
     private var refreshButton: some View {
-        Button(action: { Task { await service.refresh() } }) {
-            HStack(spacing: 4) {
-                Image(systemName: "arrow.clockwise")
-                Text("Refresh")
+        if #available(macOS 26, *) {
+            Button(action: { Task { await service.refresh() } }) {
+                Label("Refresh", systemImage: "arrow.clockwise")
             }
-            .font(ThemeTypography.caption)
-            .foregroundColor(colors.primary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .buttonStyle(.glass)
+            .disabled(service.isRefreshing)
+        } else {
+            Button(action: { Task { await service.refresh() } }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.clockwise")
+                    Text("Refresh")
+                }
+                .font(ThemeTypography.caption)
+                .foregroundColor(colors.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+            }
+            .buttonStyle(.plain)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+            .disabled(service.isRefreshing)
         }
-        .buttonStyle(.plain)
-        .interactiveGlass(cornerRadius: 8)
-        .disabled(service.isRefreshing)
     }
 
     private func statsGrid(_ stats: PeriodStats) -> some View {

@@ -13,14 +13,14 @@ struct ThemeColors {
     var warning: Color
 
     static let defaults = ThemeColors(
-        background: Color(red: 0.102, green: 0.102, blue: 0.180),  // #1A1A2E
-        surface: Color(red: 0.086, green: 0.129, blue: 0.243),     // #16213E
-        primary: Color(red: 0.694, green: 0.725, blue: 0.976),     // #B1B9F9
-        accent: Color(red: 0.843, green: 0.467, blue: 0.341),      // #D77757
-        text: Color(red: 0.878, green: 0.878, blue: 0.878),        // #E0E0E0
-        muted: Color(red: 0.533, green: 0.533, blue: 0.533),       // #888888
-        success: Color(red: 0.298, green: 0.686, blue: 0.314),     // #4CAF50
-        warning: Color(red: 1.0, green: 0.596, blue: 0.0)          // #FF9800
+        background: Color(red: 0.102, green: 0.102, blue: 0.180),
+        surface: Color(red: 0.086, green: 0.129, blue: 0.243),
+        primary: Color(red: 0.694, green: 0.725, blue: 0.976),
+        accent: Color(red: 0.843, green: 0.467, blue: 0.341),
+        text: Color(red: 0.878, green: 0.878, blue: 0.878),
+        muted: Color(red: 0.533, green: 0.533, blue: 0.533),
+        success: Color(red: 0.298, green: 0.686, blue: 0.314),
+        warning: Color(red: 1.0, green: 0.596, blue: 0.0)
     )
 }
 
@@ -35,71 +35,42 @@ struct ThemeTypography {
     static let menuBarValue = Font.custom("SF Mono", size: 11).weight(.medium)
 }
 
-// MARK: - Glass Helpers
-
-struct GlassBackground: ViewModifier {
-    let cornerRadius: CGFloat
-
-    func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
-            content
-                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
-        } else {
-            content
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-        }
-    }
-}
-
-struct GlassCard: ViewModifier {
-    let cornerRadius: CGFloat
-
-    func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
-            content
-                .padding(12)
-                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
-        } else {
-            content
-                .padding(12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-                )
-        }
-    }
-}
-
-struct InteractiveGlass: ViewModifier {
-    let cornerRadius: CGFloat
-
-    func body(content: Content) -> some View {
-        if #available(macOS 26, *) {
-            content
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
-        } else {
-            content
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
-                )
-        }
-    }
-}
+// MARK: - Glass Helpers (macOS 26+ with fallback)
 
 extension View {
-    func glassBackground(cornerRadius: CGFloat = 16) -> some View {
-        modifier(GlassBackground(cornerRadius: cornerRadius))
-    }
-
+    /// Applies glass card styling — native Liquid Glass on macOS 26, ultraThinMaterial on older
+    @ViewBuilder
     func glassCard(cornerRadius: CGFloat = 12) -> some View {
-        modifier(GlassCard(cornerRadius: cornerRadius))
+        if #available(macOS 26, *) {
+            self
+                .padding(12)
+                .glassEffect(.regular, in: .rect(cornerRadius: cornerRadius))
+        } else {
+            self
+                .padding(12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.3), .white.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 0.5
+                        )
+                )
+        }
     }
 
-    func interactiveGlass(cornerRadius: CGFloat = 8) -> some View {
-        modifier(InteractiveGlass(cornerRadius: cornerRadius))
+    /// Applies tinted glass — for progress fills, badges, etc.
+    @ViewBuilder
+    func tintedGlass(_ color: Color, cornerRadius: CGFloat = 8) -> some View {
+        if #available(macOS 26, *) {
+            self.glassEffect(.regular.tint(color), in: .rect(cornerRadius: cornerRadius))
+        } else {
+            self
+        }
     }
 }
 
@@ -114,7 +85,6 @@ final class AppSettings: ObservableObject {
     @AppStorage("warningThreshold") var warningThreshold: Double = 80
     @AppStorage("cliPath") var cliPath: String = ""
 
-    // Custom colors stored as hex strings
     @AppStorage("color_background") var backgroundHex: String = "1A1A2E"
     @AppStorage("color_surface") var surfaceHex: String = "16213E"
     @AppStorage("color_primary") var primaryHex: String = "B1B9F9"

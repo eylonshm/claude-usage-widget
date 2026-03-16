@@ -400,13 +400,14 @@ struct WidgetModelBreakdown: Codable, Identifiable {
 // MARK: - Glass Background Helper
 
 extension View {
+    @ViewBuilder
     func widgetGlassBackground() -> some View {
         if #available(macOS 26, *) {
-            return AnyView(self.containerBackground(for: .widget) {
-                Color.clear.glassEffect(.regular, in: .rect(cornerRadius: 20))
-            })
+            self.containerBackground(for: .widget) {
+                Color.clear // system applies Liquid Glass automatically on macOS 26
+            }
         } else {
-            return AnyView(self.containerBackground(WidgetColors.background, for: .widget))
+            self.containerBackground(WidgetColors.background, for: .widget)
         }
     }
 }

@@ -8,53 +8,61 @@ struct MenuBarDropdown: View {
     private var colors: ThemeColors { settings.colors }
 
     var body: some View {
-        dropdownContent
-            .padding(16)
-            .frame(width: 300)
-            .background(dropdownBackground)
+        glassContainer {
+            VStack(alignment: .leading, spacing: 10) {
+                headerRow
+                quotaCard
+                statsCard
+                if !service.modelBreakdowns.isEmpty {
+                    modelCard
+                }
+                footerRow
+            }
+        }
+        .padding(16)
+        .frame(width: 300)
+        .background(panelBackground)
+        .task {
+            if service.lastUpdated == nil {
+                await service.refresh()
+            }
+        }
+    }
+
+    // MARK: - Glass Container wrapper
+
+    @ViewBuilder
+    private func glassContainer<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if #available(macOS 26, *) {
+            GlassEffectContainer(spacing: 8) {
+                content()
+            }
+        } else {
+            content()
+        }
     }
 
     @ViewBuilder
-    private var dropdownBackground: some View {
+    private var panelBackground: some View {
         if #available(macOS 26, *) {
-            Color.clear
+            Color.clear // macOS 26 popover gets glass automatically
         } else {
             colors.background
         }
     }
 
-    private var dropdownContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Header
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundColor(colors.accent)
-                    .font(.system(size: 14))
-                Text("Claude Usage")
-                    .font(ThemeTypography.heading)
-                    .foregroundColor(colors.text)
-                Spacer()
-                refreshButton
-            }
+    // MARK: - Header
 
-            // Quota Section — glass card
-            quotaCard
-
-            // Stats card
-            statsCard
-
-            // Model Breakdown
-            if !service.modelBreakdowns.isEmpty {
-                modelCard
-            }
-
-            // Footer
-            footerRow
-        }
-        .task {
-            if service.lastUpdated == nil {
-                await service.refresh()
-            }
+    private var headerRow: some View {
+        HStack {
+            Image(systemName: "sparkles")
+                .foregroundColor(colors.accent)
+                .font(.system(size: 14))
+            Text("Claude Usage")
+                .font(ThemeTypography.heading)
+                .foregroundColor(colors.text)
+            Spacer()
+            refreshButton
         }
     }
 
@@ -132,17 +140,13 @@ struct MenuBarDropdown: View {
                     .foregroundColor(colors.muted)
             }
             Spacer()
-            Button(action: { openWindow(id: "settings") }) {
-                Image(systemName: "gear")
-                    .foregroundColor(colors.muted)
-                    .font(.system(size: 12))
+            glassButton(icon: "gear") {
+                openWindow(id: "settings")
             }
-            .buttonStyle(.plain)
-            .interactiveGlass(cornerRadius: 6)
         }
     }
 
-    // MARK: - Refresh Button
+    // MARK: - Buttons
 
     @ViewBuilder
     private var refreshButton: some View {
@@ -151,14 +155,29 @@ struct MenuBarDropdown: View {
                 .scaleEffect(0.6)
                 .frame(width: 16, height: 16)
         } else {
-            Button(action: { Task { await service.refresh() } }) {
-                Image(systemName: "arrow.clockwise")
+            glassButton(icon: "arrow.clockwise") {
+                Task { await service.refresh() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func glassButton(icon: String, action: @escaping () -> Void) -> some View {
+        if #available(macOS 26, *) {
+            Button(action: action) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.glass)
+        } else {
+            Button(action: action) {
+                Image(systemName: icon)
                     .foregroundColor(colors.muted)
                     .font(.system(size: 12))
                     .padding(4)
             }
             .buttonStyle(.plain)
-            .interactiveGlass(cornerRadius: 6)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 6))
         }
     }
 
