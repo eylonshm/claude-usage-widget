@@ -15,6 +15,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Mark build as in progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview-build -->';
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+
+            const body = `${marker}
+            ## 📦 Preview Build
+
+            > ⏳ **Building...** — a new build is in progress for \`${sha}\`. [View run](${runUrl})
+
+            _Previous download link will be updated once the build completes._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
+
       - name: Select latest Xcode
         run: |
           LATEST_XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
