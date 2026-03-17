@@ -24,7 +24,7 @@ A native macOS menu bar app that shows your Claude Code usage and quota data —
 ### Option 1: Homebrew (recommended)
 
 ```bash
-brew install --cask eylonshm/claude-usage-widget
+brew install --cask eylonshm/tap/claude-usage-widget
 ```
 
 Homebrew handles Gatekeeper automatically — no extra steps needed.

@@ -44,7 +44,7 @@ CASK="${CASK/SHA256_PLACEHOLDER/$SHA256}"
 
 ENCODED=$(printf '%s' "$CASK" | base64)
 CURRENT_SHA=$(curl -sf -H "Authorization: token $TAP_TOKEN" \
-  "https://api.github.com/repos/eylonshm/homebrew-claude-usage-widget/contents/Casks/claude-usage-widget.rb" \
+  "https://api.github.com/repos/eylonshm/homebrew-tap/contents/Casks/claude-usage-widget.rb" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
 
 jq -n \
@@ -55,7 +55,7 @@ jq -n \
 | curl -sf -X PUT \
   -H "Authorization: token $TAP_TOKEN" \
   -H "Content-Type: application/json" \
-  "https://api.github.com/repos/eylonshm/homebrew-claude-usage-widget/contents/Casks/claude-usage-widget.rb" \
+  "https://api.github.com/repos/eylonshm/homebrew-tap/contents/Casks/claude-usage-widget.rb" \
   -d @-
 
 echo "Tap updated to v${VERSION}"

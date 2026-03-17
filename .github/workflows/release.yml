@@ -233,7 +233,7 @@ jobs:
 
             ### Homebrew (recommended)
             ```bash
-            brew install --cask eylonshm/claude-usage-widget
+            brew install --cask eylonshm/tap/claude-usage-widget
             ```
 
             ### Manual DMG
