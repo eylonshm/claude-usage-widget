@@ -40,7 +40,7 @@ struct ProgressBarView: View {
             if !detail.isEmpty {
                 Text(detail)
                     .font(ThemeTypography.caption)
-                    .foregroundColor(colors.muted)
+                    .foregroundColor(colors.muted.opacity(0.6))
             }
         }
     }
