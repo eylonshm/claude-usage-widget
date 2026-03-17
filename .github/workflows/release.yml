@@ -32,9 +32,6 @@ jobs:
           # Regenerate project with the runner's Xcode version
           rm -rf ClaudeUsage.xcodeproj
           xcodegen generate
-          # Debug: show signing-related lines in generated project
-          echo "==> Signing settings in pbxproj:"
-          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" ClaudeUsage.xcodeproj/project.pbxproj | head -30
 
       - name: Import signing certificate
         env:

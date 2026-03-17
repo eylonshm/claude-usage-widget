@@ -43,8 +43,9 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ClaudeUsage/Resources/ClaudeUsage.entitlements
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
+        PROVISIONING_PROFILE_SPECIFIER: ""
         PRODUCT_NAME: Claude Usage
-        MARKETING_VERSION: "1.2.3"
+        MARKETING_VERSION: "1.2.5"
         CURRENT_PROJECT_VERSION: "1"
     dependencies:
       - package: Sparkle
@@ -70,8 +71,9 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
+        PROVISIONING_PROFILE_SPECIFIER: ""
         PRODUCT_NAME: ClaudeUsageWidgetExtension
-        MARKETING_VERSION: "1.2.3"
+        MARKETING_VERSION: "1.2.5"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: true
     entitlements:
