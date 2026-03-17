@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 1.2.3)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,6 +19,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_call' && 'main' || github.ref }}
 
       - name: Select latest Xcode
         run: |
@@ -111,7 +119,12 @@ jobs:
 
       - name: Get version
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create DMG
         run: |
@@ -188,7 +201,7 @@ jobs:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           DMG_PATH="dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
-          DMG_URL="https://github.com/eylonshm/claude-usage-widget/releases/download/${{ github.ref_name }}/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+          DMG_URL="https://github.com/eylonshm/claude-usage-widget/releases/download/v${{ steps.version.outputs.VERSION }}/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
 
           # Sign the DMG and capture the EdDSA signature
           SIGNATURE=$(echo "$SPARKLE_PRIVATE_KEY" | /tmp/bin/sign_update --ed-key-file - -p "$DMG_PATH")
@@ -220,12 +233,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add appcast.xml
-          git commit -m "chore: update appcast for ${{ github.ref_name }}"
+          git commit -m "chore: update appcast for v${{ steps.version.outputs.VERSION }}"
           git push origin HEAD:main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
           files: dist/ClaudeUsage-*.dmg
           generate_release_notes: true
           body: |

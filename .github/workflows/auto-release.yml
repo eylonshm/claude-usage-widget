@@ -1,0 +1,88 @@
+name: Auto Release on Merge
+
+# Triggered when a PR is merged into main.
+# Bumps the version (patch by default), commits to main, then calls
+# release.yml directly via workflow_call — no PAT required.
+#
+# To request a specific bump type, add one of these labels to the PR:
+#   release:major  →  1.2.3 → 2.0.0
+#   release:minor  →  1.2.3 → 1.3.0
+#   (no label)     →  1.2.3 → 1.2.4  (patch, default)
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.new.outputs.VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine release type from PR labels
+        id: release_type
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            if (labels.includes('release:major')) return 'major';
+            if (labels.includes('release:minor')) return 'minor';
+            return 'patch';
+
+      - name: Get current version
+        id: current
+        run: |
+          VERSION=$(grep '^\s*MARKETING_VERSION:' project.yml | head -1 | awk -F'"' '{print $2}')
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: new
+        run: |
+          CURRENT="${{ steps.current.outputs.VERSION }}"
+          TYPE="${{ steps.release_type.outputs.result }}"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+
+          case "$TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor)
+              MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch)
+              PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW="${MAJOR}.${MINOR}.${PATCH}"
+          echo "VERSION=${NEW}" >> $GITHUB_OUTPUT
+          echo "Bumping ${CURRENT} → ${NEW} (${TYPE})"
+
+      - name: Update project.yml
+        run: |
+          NEW="${{ steps.new.outputs.VERSION }}"
+          sed -i "s/MARKETING_VERSION: \"[0-9]*\.[0-9]*\.[0-9]*\"/MARKETING_VERSION: \"${NEW}\"/g" project.yml
+
+      - name: Commit and push version bump
+        run: |
+          NEW="${{ steps.new.outputs.VERSION }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add project.yml
+          git commit -m "chore: bump version to ${NEW}"
+          git push origin main
+
+  release:
+    needs: bump
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.bump.outputs.version }}
+    secrets: inherit

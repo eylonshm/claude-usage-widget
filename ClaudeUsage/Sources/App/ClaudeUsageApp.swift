@@ -7,13 +7,14 @@ struct ClaudeUsageApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var service = UsageDataService.shared
     @StateObject private var settings = AppSettings.shared
+    @AppStorage("showMenuBar") private var showMenuBar: Bool = true
     // Loading phase: 0–360, driven by a sine wave so the fill breathes smoothly 0→100→0→…
     @State private var spinnerAngle: Double = 180
     private let spinnerTimer = Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()
 
     var body: some Scene {
         // Menu Bar
-        MenuBarExtra {
+        MenuBarExtra(isInserted: $showMenuBar) {
             MenuBarDropdown()
         } label: {
             menuBarLabel
@@ -118,9 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            SettingsWindowController.shared.open()
-        }
+        SettingsWindowController.shared.open()
         return true
     }
 }
