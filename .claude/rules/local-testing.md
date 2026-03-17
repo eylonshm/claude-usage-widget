@@ -28,3 +28,5 @@ open "/Applications/Claude Usage.app"
 ```
 
 Note: always `rm -rf` the old app before copying — a plain `cp -R` over an existing `.app` will silently leave stale files.
+
+**Never push changes before the user confirms the locally installed app is working correctly.**
