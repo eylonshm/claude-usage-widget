@@ -3,15 +3,15 @@
   <channel>
     <title>Claude Usage Widget</title>
     <item>
-      <title>Version 1.2.20</title>
-      <sparkle:version>1.2.20</sparkle:version>
-      <sparkle:shortVersionString>1.2.20</sparkle:shortVersionString>
+      <title>Version main</title>
+      <sparkle:version>main</sparkle:version>
+      <sparkle:shortVersionString>main</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <pubDate>Tue, 17 Mar 2026 21:31:53 +0000</pubDate>
+      <pubDate>Tue, 17 Mar 2026 22:48:09 +0000</pubDate>
       <enclosure
-        url="https://github.com/eylonshm/claude-usage-widget/releases/download/v1.2.20/ClaudeUsage-1.2.20.dmg"
-        sparkle:edSignature="OsYWQxIA3b00Ab32VCVUjsfuE1jLLm/mEAN6BUxBkl37jq5T2HXGidpXm6KgVDT7CpVwcN9GYjxM7DitE+GOAQ=="
-        length="1920082"
+        url="https://github.com/eylonshm/claude-usage-widget/releases/download/vmain/ClaudeUsage-main.dmg"
+        sparkle:edSignature="bmVoj8m/rkePc6ie7TU/VChv3OilYr/MHxmXAAH1a5PFQBGlw2LvrmmQldYt0EDg9gPeiFGDBOIUV5h6EbPjAw=="
+        length="1951792"
         type="application/octet-stream"/>
     </item>
   </channel>
