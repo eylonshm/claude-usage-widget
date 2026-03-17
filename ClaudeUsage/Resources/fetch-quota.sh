@@ -51,15 +51,19 @@ RAW=$(expect -c "
 # Strip ANSI codes and control chars
 CLEAN=$(echo "$RAW" | sed $'s/\x1b\[[0-9;]*[a-zA-Z]//g' | sed $'s/\x1b\[?[0-9]*[a-z]//g' | sed $'s/\x1b\[[0-9;]*m//g' | sed $'s/\x1b[>\\[][^a-zA-Z]*[a-zA-Z]//g' | tr -s ' ')
 
-# Extract percentages — spaces may be stripped so match without them
-SESSION_PCT=$(echo "$CLEAN" | grep -i "session" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
-WEEKLY_ALL_PCT=$(echo "$CLEAN" | grep -A1 -i "allmodels\|all models" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
-WEEKLY_SONNET_PCT=$(echo "$CLEAN" | grep -A1 -i "Sonnetonly\|Sonnet only" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
+# The TUI output may collapse all sections onto one line.
+# Split on "Current " so each section is on its own line before parsing.
+SPLIT=$(echo "$CLEAN" | sed 's/Current /\nCurrent /g')
 
-# Extract reset times
-SESSION_RESET=$(echo "$CLEAN" | grep -A4 -i "session" | grep -i "rese" | sed 's/.*[Rr]ese[ts]* *//' | tr -d $'\r' | head -1)
-WEEKLY_ALL_RESET=$(echo "$CLEAN" | grep -A4 -i "allmodels\|all models" | grep -i "eset" | sed 's/.*[Rr]esets* *//' | tr -d $'\r' | head -1)
-WEEKLY_SONNET_RESET=$(echo "$CLEAN" | grep -A4 -i "Sonnetonly\|Sonnet only" | grep -i "eset" | sed 's/.*[Rr]esets* *//' | tr -d $'\r' | head -1)
+# Extract percentages — each section is now isolated
+SESSION_PCT=$(echo "$SPLIT" | grep -i "session" | grep -v -i "week" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
+WEEKLY_ALL_PCT=$(echo "$SPLIT" | grep -i "allmodels\|all models" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
+WEEKLY_SONNET_PCT=$(echo "$SPLIT" | grep -i "Sonnetonly\|Sonnet only" | grep -oE '[0-9]+%' | head -1 | tr -d '%')
+
+# Extract reset times — strip everything up to and including "Reset(s)" then strip trailing "Esc to cancel"
+SESSION_RESET=$(echo "$SPLIT" | grep -i "session" | grep -v -i "week" | sed 's/.*[Rr]ese[tTs]*//' | sed 's/Esc.*//' | tr -d $'\r' | head -1)
+WEEKLY_ALL_RESET=$(echo "$SPLIT" | grep -i "allmodels\|all models" | sed 's/.*[Rr]ese[tTs]*//' | sed 's/Esc.*//' | tr -d $'\r' | head -1)
+WEEKLY_SONNET_RESET=$(echo "$SPLIT" | grep -i "Sonnetonly\|Sonnet only" | sed 's/.*[Rr]ese[tTs]*//' | sed 's/Esc.*//' | tr -d $'\r' | head -1)
 
 # Default to 0/— if empty
 SESSION_PCT=${SESSION_PCT:-0}
