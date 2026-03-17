@@ -32,9 +32,9 @@ jobs:
           # Regenerate project with the runner's Xcode version
           rm -rf ClaudeUsage.xcodeproj
           xcodegen generate
-          # Force Manual signing in the generated project (xcodegen ignores CODE_SIGN_STYLE in settings)
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/g' ClaudeUsage.xcodeproj/project.pbxproj
-          sed -i '' 's/ProvisioningStyle = Automatic/ProvisioningStyle = Manual/g' ClaudeUsage.xcodeproj/project.pbxproj
+          # Debug: show signing-related lines in generated project
+          echo "==> Signing settings in pbxproj:"
+          grep -n "ProvisioningStyle\|CODE_SIGN_STYLE\|DEVELOPMENT_TEAM" ClaudeUsage.xcodeproj/project.pbxproj | head -30
 
       - name: Import signing certificate
         env:
@@ -60,6 +60,7 @@ jobs:
             -scheme ClaudeUsage \
             -configuration Release \
             build \
+            DEVELOPMENT_TEAM="9WM2J36V23" \
             CONFIGURATION_BUILD_DIR="$(pwd)/build"
 
       - name: Embed widget extension and resources

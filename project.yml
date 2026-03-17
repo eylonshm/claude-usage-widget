@@ -17,7 +17,6 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "Developer ID Application"
-    DEVELOPMENT_TEAM: "9WM2J36V23"
 
 targets:
   ClaudeUsage:
@@ -44,7 +43,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ClaudeUsage/Resources/ClaudeUsage.entitlements
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
-        DEVELOPMENT_TEAM: "9WM2J36V23"
         PRODUCT_NAME: Claude Usage
         MARKETING_VERSION: "1.2.3"
         CURRENT_PROJECT_VERSION: "1"
@@ -72,7 +70,6 @@ targets:
         CODE_SIGN_ENTITLEMENTS: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
-        DEVELOPMENT_TEAM: "9WM2J36V23"
         PRODUCT_NAME: ClaudeUsageWidgetExtension
         MARKETING_VERSION: "1.2.3"
         CURRENT_PROJECT_VERSION: "1"
