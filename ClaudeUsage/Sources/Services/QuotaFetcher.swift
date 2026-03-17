@@ -103,28 +103,30 @@ final class QuotaFetcher {
     // MARK: - Trusted Directory
 
     private func findTrustedDirectory(home: String) -> String {
-        // Claude stores project data in ~/.claude/projects/ with encoded paths
-        // e.g. "-Users-eshmilovich-Documents-Go7-Projects"
-        // The leading dash represents "/" so the full path is /Users/eshmilovich/Documents/Go7/Projects
+        // Prefer a previously-trusted Claude project directory that is NOT inside
+        // a macOS TCC-protected folder (Documents, Desktop, Downloads) to avoid
+        // re-prompting for file access on every reinstall.
+        let tccProtected = ["Documents", "Desktop", "Downloads", "Movies", "Music", "Pictures"]
+            .map { "\(home)/\($0)" }
+
         let projectsDir = "\(home)/.claude/projects"
         let fm = FileManager.default
 
         if let entries = try? fm.contentsOfDirectory(atPath: projectsDir) {
-            // Sort by longest path first (most specific directories first)
             let sorted = entries.sorted { $0.count > $1.count }
             for entry in sorted {
-                // Skip entries with dots (like MEMORY.md) or nested worktree paths
                 guard !entry.contains("."), !entry.contains("worktree") else { continue }
-                // Decode: leading dash = /, subsequent single dashes = /
                 let decoded = entry.replacingOccurrences(of: "-", with: "/")
-                // decoded starts with / already since entry starts with -
+                guard !tccProtected.contains(where: { decoded.hasPrefix($0) }) else { continue }
                 if fm.fileExists(atPath: decoded) {
                     return decoded
                 }
             }
         }
 
-        return home
+        // Fall back to ~/.claude — the expect script handles any trust dialog
+        let claudeDir = "\(home)/.claude"
+        return fm.fileExists(atPath: claudeDir) ? claudeDir : home
     }
 
     // MARK: - CLI Path Resolution

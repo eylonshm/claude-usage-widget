@@ -34,12 +34,23 @@ fi
 
 # Working directory is set by the calling app to a trusted claude project dir
 
-# Use expect — --dangerously-skip-permissions bypasses trust dialog
+# Use expect to spawn claude, handle optional trust dialog, then fetch /usage
 RAW=$(expect -c "
     log_user 1
     set timeout 20
     spawn $CLAUDE --dangerously-skip-permissions
-    sleep 4
+    # Wait up to 4s for an optional directory trust dialog.
+    # Option 1 (Yes, trust) is pre-selected — send Enter to confirm it.
+    # If no dialog appears (directory already trusted), continue immediately.
+    set timeout 4
+    expect {
+        -re {trust|Trust} {
+            send \"\r\"
+            sleep 5
+        }
+        timeout {}
+    }
+    set timeout 20
     send \"/usage\r\"
     sleep 6
     send \"\x1b\"
