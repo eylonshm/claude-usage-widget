@@ -15,17 +15,9 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
-  configs:
-    Debug:
-      CODE_SIGN_IDENTITY: "-"
-      CODE_SIGN_STYLE: Manual
-      CODE_SIGNING_REQUIRED: "NO"
-      CODE_SIGNING_ALLOWED: "NO"
-      DEVELOPMENT_TEAM: ""
-    Release:
-      CODE_SIGN_IDENTITY: "Developer ID Application"
-      CODE_SIGN_STYLE: Manual
-      DEVELOPMENT_TEAM: "9WM2J36V23"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Developer ID Application"
+    DEVELOPMENT_TEAM: "9WM2J36V23"
 
 targets:
   ClaudeUsage:
