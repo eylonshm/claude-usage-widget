@@ -18,6 +18,7 @@ final class UsageDataService: ObservableObject {
     @Published var hasLoadedOnce: Bool = false
     @Published var quotaError: String?
     @Published var statsError: String?
+    @Published var permissionDenied: Bool = false
 
     private let statsFetcher = StatsFetcher()
     private let quotaFetcher = QuotaFetcher()
@@ -64,6 +65,10 @@ final class UsageDataService: ObservableObject {
             self.weekStats = statsFetcher.computeThisWeek(from: cache)
             self.monthStats = statsFetcher.computeThisMonth(from: cache)
             self.modelBreakdowns = statsFetcher.computeModelBreakdowns(from: cache)
+            self.statsError = nil
+            self.permissionDenied = false
+        } catch FetchError.permissionDenied {
+            self.permissionDenied = true
             self.statsError = nil
         } catch {
             self.statsError = error.localizedDescription

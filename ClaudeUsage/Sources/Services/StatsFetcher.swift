@@ -11,9 +11,15 @@ final class StatsFetcher {
             throw FetchError.fileNotFound
         }
 
-        let data = try Data(contentsOf: statsPath)
-        let decoder = JSONDecoder()
-        return try decoder.decode(StatsCache.self, from: data)
+        do {
+            let data = try Data(contentsOf: statsPath)
+            let decoder = JSONDecoder()
+            return try decoder.decode(StatsCache.self, from: data)
+        } catch let error as NSError
+            where error.code == NSFileReadNoPermissionError
+               || (error.domain == NSPOSIXErrorDomain && (error.code == Int(EACCES) || error.code == Int(EPERM))) {
+            throw FetchError.permissionDenied
+        }
     }
 
     func computeToday(from cache: StatsCache) -> PeriodStats {
@@ -86,6 +92,7 @@ enum FetchError: LocalizedError {
     case cliNotFound
     case notAuthenticated
     case parseFailed(String)
+    case permissionDenied
 
     var errorDescription: String? {
         switch self {
@@ -97,6 +104,8 @@ enum FetchError: LocalizedError {
             return "Not logged in — run `claude` to authenticate."
         case .parseFailed(let detail):
             return "Failed to parse usage data: \(detail)"
+        case .permissionDenied:
+            return "Permission denied"
         }
     }
 }

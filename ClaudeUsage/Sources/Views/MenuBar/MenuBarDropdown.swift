@@ -11,13 +11,17 @@ struct MenuBarDropdown: View {
         glassContainer {
             VStack(alignment: .leading, spacing: 10) {
                 headerRow
-                sessionCountdownBanner
-                quotaCard
-                if !service.modelBreakdowns.isEmpty {
-                    modelCard
-                }
-                if settings.showLifetime, let cache = service.statsCache {
-                    lifetimeCard(cache)
+                if service.permissionDenied {
+                    permissionDeniedBanner
+                } else {
+                    sessionCountdownBanner
+                    quotaCard
+                    if !service.modelBreakdowns.isEmpty {
+                        modelCard
+                    }
+                    if settings.showLifetime, let cache = service.statsCache {
+                        lifetimeCard(cache)
+                    }
                 }
                 footerRow
             }
@@ -64,6 +68,48 @@ struct MenuBarDropdown: View {
             Spacer()
             refreshButton
         }
+    }
+
+    // MARK: - Permission Denied Banner
+
+    private var permissionDeniedBanner: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "lock.shield")
+                    .font(.system(size: 16))
+                    .foregroundColor(colors.accent)
+                Text("Permission Required")
+                    .font(ThemeTypography.heading)
+                    .foregroundColor(colors.text)
+            }
+
+            Text("Claude Usage needs access to read your stats from **~/.claude/**. Open Privacy & Security settings and enable access for Claude Usage under **Files and Folders**.")
+                .font(ThemeTypography.caption)
+                .foregroundColor(colors.muted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                NSWorkspace.shared.open(
+                    URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_FilesAndFolders")!
+                )
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "gear")
+                    Text("Open Privacy Settings")
+                }
+                .font(ThemeTypography.caption)
+                .foregroundColor(colors.primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(colors.primary.opacity(0.12), in: RoundedRectangle(cornerRadius: 6))
+            }
+            .buttonStyle(.plain)
+
+            Text("After granting access, click Refresh.")
+                .font(ThemeTypography.caption)
+                .foregroundColor(colors.muted)
+        }
+        .glassCard(cornerRadius: 10)
     }
 
     // MARK: - Quota Card
