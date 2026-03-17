@@ -72,19 +72,32 @@ jobs:
 
       - name: Sign app with Developer ID
         run: |
-          # Sign the widget extension first (inner bundles must be signed before outer)
+          APP="build/Claude Usage.app"
+
+          # Sign all nested frameworks/XPCServices bottom-up before signing the app
+          # Sparkle has its own XPCServices and helper apps that must be signed first
+          find "$APP/Contents/Frameworks" -name "*.framework" -o -name "*.xpc" -o -name "*.app" | \
+            sort -r | while read bundle; do
+              codesign --force --sign "Developer ID Application" \
+                --options runtime \
+                "$bundle"
+            done
+
+          # Sign the widget extension
           codesign --force --sign "Developer ID Application" \
             --options runtime \
             --entitlements ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements \
-            "build/Claude Usage.app/Contents/PlugIns/ClaudeUsageWidgetExtension.appex"
+            "$APP/Contents/PlugIns/ClaudeUsageWidgetExtension.appex"
+
           # Sign the main app
           codesign --force --sign "Developer ID Application" \
             --options runtime \
             --entitlements ClaudeUsage/Resources/ClaudeUsage.entitlements \
-            "build/Claude Usage.app"
+            "$APP"
+
           # Verify
-          codesign --verify --deep --strict "build/Claude Usage.app"
-          echo "Signed by: $(codesign -dv 'build/Claude Usage.app' 2>&1 | grep Authority | head -1)"
+          codesign --verify --deep --strict "$APP"
+          echo "Signed by: $(codesign -dv "$APP" 2>&1 | grep Authority | head -1)"
 
       - name: Get version
         id: version
