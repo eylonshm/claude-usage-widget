@@ -253,24 +253,13 @@ struct SettingsTab: View {
                 }
                 .glassCard(cornerRadius: 12)
 
-                // CLI Path
-                VStack(alignment: .leading, spacing: 8) {
-                    SectionHeader(title: "Advanced")
-                    HStack {
-                        Text("Claude CLI Path")
-                            .font(ThemeTypography.body)
-                            .foregroundColor(colors.text)
-                        TextField("Auto-detected", text: $settings.cliPath)
-                            .font(ThemeTypography.body)
-                            .textFieldStyle(.roundedBorder)
-                    }
-                }
-                .glassCard(cornerRadius: 12)
-
                 // Updates
                 if let updater = AppDelegate.shared?.updaterViewModel {
                     UpdatesSection(updater: updater)
                 }
+
+                // Advanced
+                AdvancedSection()
             }
             .padding(20)
         }
@@ -364,6 +353,64 @@ struct UpdatesSection: View {
                 .disabled(!updater.canCheckForUpdates)
             }
             .padding(.top, 2)
+        }
+        .glassCard(cornerRadius: 12)
+    }
+}
+
+// MARK: - Advanced Section
+
+struct AdvancedSection: View {
+    @State private var cliPath: String = AppSettings.shared.cliPath
+    @State private var showInfoTooltip: Bool = false
+    @FocusState private var isFocused: Bool
+    private var colors: ThemeColors { AppSettings.shared.colors }
+
+    private func save() {
+        AppSettings.shared.cliPath = cliPath
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionHeader(title: "Advanced")
+            HStack(spacing: 6) {
+                Text("Claude CLI Path")
+                    .font(ThemeTypography.body)
+                    .foregroundColor(colors.text)
+                Image(systemName: "info.circle")
+                    .font(.system(size: 12))
+                    .foregroundColor(showInfoTooltip ? colors.primary : colors.muted)
+                    .onHover { hovering in showInfoTooltip = hovering }
+                    .popover(isPresented: $showInfoTooltip, arrowEdge: .top) {
+                        Text("Path to the Claude CLI executable.\nDefault: auto-detected from common locations\n(~/.local/bin, /usr/local/bin, /opt/homebrew/bin).\nOverride only if Claude is installed elsewhere.")
+                            .font(.system(size: 12))
+                            .padding(10)
+                            .frame(maxWidth: 300)
+                    }
+                TextField("Auto-detected", text: $cliPath)
+                    .font(ThemeTypography.body)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($isFocused)
+                    .onSubmit {
+                        save()
+                        isFocused = false
+                    }
+                    .onChange(of: isFocused) { _, focused in
+                        if !focused { save() }
+                    }
+                Button(action: {
+                    cliPath = ""
+                    save()
+                }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 12))
+                }
+                .buttonStyle(.borderless)
+                .foregroundColor(colors.muted)
+                .disabled(cliPath.isEmpty)
+                .opacity(cliPath.isEmpty ? 0.3 : 1)
+                .help("Reset to auto-detect")
+            }
         }
         .glassCard(cornerRadius: 12)
     }
