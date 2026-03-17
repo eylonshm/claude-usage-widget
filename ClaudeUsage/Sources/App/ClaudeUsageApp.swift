@@ -25,7 +25,9 @@ struct ClaudeUsageApp: App {
     private var menuBarLabel: some View {
         let pct = service.quota.sessionPercent
         let hasData = !(service.quotaError != nil && service.quota == .empty)
-        let isLoading = service.isRefreshing || !service.hasLoadedOnce
+        // Show loading spinner only until the first load completes.
+        // Background refreshes update silently — no spinner in the menu bar.
+        let isLoading = !service.hasLoadedOnce
 
         if isLoading {
             // Sine-eased oscillation: fill breathes 0→100→0→… over 2 s with smooth ease-in/out.
