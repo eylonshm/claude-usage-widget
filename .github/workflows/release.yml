@@ -33,15 +33,30 @@ jobs:
           rm -rf ClaudeUsage.xcodeproj
           xcodegen generate
 
-      - name: Build Release
+      - name: Import signing certificate
+        env:
+          DEVELOPER_ID_CERT: ${{ secrets.DEVELOPER_ID_CERT }}
+          DEVELOPER_ID_CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$DEVELOPER_ID_CERT" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security import $RUNNER_TEMP/cert.p12 -k "$KEYCHAIN_PATH" \
+            -P "$DEVELOPER_ID_CERT_PASSWORD" -T /usr/bin/codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+      - name: Build Release (signed)
         run: |
           xcodebuild \
             -project ClaudeUsage.xcodeproj \
             -scheme ClaudeUsage \
             -configuration Release \
             build \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_ALLOWED=NO \
             CONFIGURATION_BUILD_DIR="$(pwd)/build"
 
       - name: Embed widget extension and resources
@@ -74,6 +89,22 @@ jobs:
             -volname "Claude Usage" \
             -srcfolder "build/Claude Usage.app" \
             -ov -format UDZO \
+            "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+        run: |
+          codesign --sign "Developer ID Application" \
+            "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
+          xcrun notarytool submit \
+            "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$NOTARIZATION_PASSWORD" \
+            --team-id "9WM2J36V23" \
+            --wait
+          xcrun stapler staple \
             "dist/ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg"
 
       - name: Install Sparkle tools
@@ -140,24 +171,6 @@ jobs:
             ### Manual DMG
             1. Download `ClaudeUsage-${{ steps.version.outputs.VERSION }}.dmg`
             2. Open the DMG and drag **Claude Usage** to your Applications folder
-            3. Since the app is not notarized, macOS will block it on first launch. To open it:
-
-            **Option A -- Right-click method (easiest):**
-            - Right-click (or Control-click) on **Claude Usage** in Applications
-            - Select **Open** from the context menu
-            - Click **Open** in the dialog that appears
-            - You only need to do this once
-
-            **Option B -- System Settings:**
-            - Try to open the app normally (it will be blocked)
-            - Go to **System Settings > Privacy & Security**
-            - Scroll down to find the message about "Claude Usage" being blocked
-            - Click **Open Anyway**
-
-            **Option C -- Terminal (removes quarantine flag):**
-            ```bash
-            xattr -cr /Applications/Claude\ Usage.app
-            ```
 
             ## Requirements
             - macOS 14 (Sonoma) or later
