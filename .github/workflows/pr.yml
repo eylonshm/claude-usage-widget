@@ -56,7 +56,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(grep 'MARKETING_VERSION' project.yml | head -1 | awk -F'"' '{print $2}')
+          VERSION=$(grep '^\s*MARKETING_VERSION:' project.yml | head -1 | awk -F'"' '{print $2}')
           echo "VERSION=${VERSION}-pr.${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
 
       - name: Create DMG
