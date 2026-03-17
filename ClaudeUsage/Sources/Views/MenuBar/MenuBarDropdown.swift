@@ -10,6 +10,7 @@ struct MenuBarDropdown: View {
         glassContainer {
             VStack(alignment: .leading, spacing: 10) {
                 headerRow
+                sessionCountdownBanner
                 quotaCard
                 if !service.modelBreakdowns.isEmpty {
                     modelCard
@@ -128,6 +129,43 @@ struct MenuBarDropdown: View {
             }
         }
         .glassCard(cornerRadius: 10)
+    }
+
+    // MARK: - Session Countdown Banner
+
+    @ViewBuilder
+    private var sessionCountdownBanner: some View {
+        if let resetDate = service.sessionResetDate {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let remaining = resetDate.timeIntervalSince(context.date)
+                if remaining > 0 {
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 11))
+                            .foregroundColor(colors.accent)
+                        Text("New session starts in \(formatCountdown(remaining))")
+                            .font(ThemeTypography.caption)
+                            .foregroundColor(colors.text)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(colors.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+                }
+            }
+        }
+    }
+
+    private func formatCountdown(_ interval: TimeInterval) -> String {
+        let total = Int(interval)
+        let days = total / 86400
+        let hours = (total % 86400) / 3600
+        let mins = (total % 3600) / 60
+        let secs = total % 60
+        if days > 0 { return "\(days)d \(hours)h \(mins)m" }
+        if hours > 0 { return "\(hours)h \(mins)m \(secs)s" }
+        if mins > 0 { return "\(mins)m \(secs)s" }
+        return "\(secs)s"
     }
 
     // MARK: - Footer

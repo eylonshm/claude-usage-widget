@@ -21,7 +21,11 @@ final class UsageDataService: ObservableObject {
     private let statsFetcher = StatsFetcher()
     private let quotaFetcher = QuotaFetcher()
     private var refreshTimer: Timer?
+    private var sessionResetTimer: Timer?
     private let settings = AppSettings.shared
+
+    // Parsed reset date exposed to views for the countdown banner
+    var sessionResetDate: Date? { parseSessionResetDate(quota.sessionResetTime) }
 
     private init() {
         startTimer()
@@ -44,6 +48,7 @@ final class UsageDataService: ObservableObject {
 
         writeWidgetData()
         WidgetCenter.shared.reloadAllTimelines()
+        scheduleSessionResetRefresh()
     }
 
     private func fetchStats() async {
@@ -104,6 +109,91 @@ final class UsageDataService: ObservableObject {
 
     func restartTimer() {
         startTimer()
+    }
+
+    // MARK: - Session Reset Auto-Refresh
+
+    private func scheduleSessionResetRefresh() {
+        sessionResetTimer?.invalidate()
+        sessionResetTimer = nil
+
+        guard let resetDate = parseSessionResetDate(quota.sessionResetTime) else { return }
+        // Fire 5s after the reset to let the new session fully register
+        let fireDate = resetDate.addingTimeInterval(5)
+        guard fireDate > Date() else { return }
+
+        let timer = Timer(fire: fireDate, interval: 0, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.sessionResetTimer = nil
+                await self?.refresh()
+            }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        sessionResetTimer = timer
+    }
+
+    func parseSessionResetDate(_ raw: String) -> Date? {
+        guard raw != "—", !raw.isEmpty else { return nil }
+
+        var tz = TimeZone.current
+        if let open = raw.range(of: "("), let close = raw.range(of: ")") {
+            let tzId = String(raw[raw.index(after: open.lowerBound)..<close.lowerBound])
+            tz = TimeZone(identifier: tzId) ?? .current
+        }
+
+        var cal = Calendar.current
+        cal.timeZone = tz
+
+        let stripped = raw.components(separatedBy: "(").first?
+            .trimmingCharacters(in: .whitespaces) ?? raw
+
+        let monthMap = ["jan":1,"feb":2,"mar":3,"apr":4,"may":5,"jun":6,
+                        "jul":7,"aug":8,"sep":9,"oct":10,"nov":11,"dec":12]
+
+        // Format: "Mar 22 at 11pm"
+        let withDate = try? NSRegularExpression(
+            pattern: #"([A-Za-z]+)\s+(\d+)\s+at\s+(\d+)(?::(\d+))?\s*(am|pm)"#,
+            options: .caseInsensitive)
+        if let m = withDate?.firstMatch(in: stripped, range: NSRange(stripped.startIndex..., in: stripped)) {
+            let g = { (i: Int) -> String in String(stripped[Range(m.range(at: i), in: stripped)!]) }
+            guard let month = monthMap[g(1).lowercased()] else { return nil }
+            let day = Int(g(2)) ?? 1
+            var hour = Int(g(3)) ?? 0
+            let min = m.range(at: 4).length > 0 ? (Int(g(4)) ?? 0) : 0
+            let ampm = g(5).lowercased()
+            if ampm == "pm" && hour != 12 { hour += 12 }
+            if ampm == "am" && hour == 12 { hour = 0 }
+            var comps = DateComponents()
+            comps.year = cal.component(.year, from: Date())
+            comps.month = month; comps.day = day
+            comps.hour = hour; comps.minute = min; comps.second = 0
+            comps.timeZone = tz
+            if let date = cal.date(from: comps) {
+                if date < Date() { comps.year! += 1; return cal.date(from: comps) }
+                return date
+            }
+        }
+
+        // Format: "2pm" (time only — today or tomorrow)
+        let timeOnly = try? NSRegularExpression(
+            pattern: #"(\d+)(?::(\d+))?\s*(am|pm)"#,
+            options: .caseInsensitive)
+        if let m = timeOnly?.firstMatch(in: stripped, range: NSRange(stripped.startIndex..., in: stripped)) {
+            let g = { (i: Int) -> String in String(stripped[Range(m.range(at: i), in: stripped)!]) }
+            var hour = Int(g(1)) ?? 0
+            let min = m.range(at: 2).length > 0 ? (Int(g(2)) ?? 0) : 0
+            let ampm = g(3).lowercased()
+            if ampm == "pm" && hour != 12 { hour += 12 }
+            if ampm == "am" && hour == 12 { hour = 0 }
+            var comps = cal.dateComponents([.year, .month, .day], from: Date())
+            comps.hour = hour; comps.minute = min; comps.second = 0
+            comps.timeZone = tz
+            if let date = cal.date(from: comps) {
+                return date < Date() ? cal.date(byAdding: .day, value: 1, to: date) : date
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Widget Data Sharing
