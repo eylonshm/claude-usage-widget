@@ -57,6 +57,9 @@ jobs:
             -scheme ClaudeUsage \
             -configuration Release \
             build \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="9WM2J36V23" \
             CONFIGURATION_BUILD_DIR="$(pwd)/build"
 
       - name: Embed widget extension and resources
