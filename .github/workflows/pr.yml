@@ -6,15 +6,12 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   build:
     if: github.event.action != 'closed'
     runs-on: macos-15
-    outputs:
-      version: ${{ steps.version.outputs.VERSION }}
-      dmg: ${{ steps.dmg.outputs.DMG }}
     steps:
       - uses: actions/checkout@v4
 
@@ -102,39 +99,77 @@ jobs:
           echo "DMG=${DMG}" >> $GITHUB_OUTPUT
 
       - name: Create or update draft release
+        id: release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="pr-${{ github.event.pull_request.number }}"
-          VERSION="${{ steps.version.outputs.VERSION }}"
           DMG="${{ steps.dmg.outputs.DMG }}"
           TITLE="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
-
-          BODY="## Preview Build (unsigned)
-
-          Built from PR #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}
-
-          > ⚠️ This is an **unsigned** preview build for testing only. Not notarized.
-          > You may need to right-click → Open to bypass Gatekeeper.
-
-          **Branch:** \`${{ github.head_ref }}\`
-          **Commit:** ${{ github.event.pull_request.head.sha }}
-
-          ### Install
-          1. Download \`${DMG}\`
-          2. Open the DMG and drag **Claude Usage** to Applications
-          3. Right-click the app → Open (to bypass unsigned warning)"
 
           # Delete existing release/tag for this PR if present
           gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
 
-          # Create fresh draft pre-release
-          gh release create "$TAG" \
+          # Create fresh draft pre-release and capture the URL
+          RELEASE_URL=$(gh release create "$TAG" \
             --title "$TITLE" \
-            --notes "$BODY" \
+            --notes "Preview build for PR #${{ github.event.pull_request.number }}" \
             --draft \
             --prerelease \
-            "dist/${DMG}"
+            "dist/${DMG}" \
+            --json url --jq '.url')
+
+          DOWNLOAD_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${DMG}"
+          echo "DOWNLOAD_URL=${DOWNLOAD_URL}" >> $GITHUB_OUTPUT
+          echo "RELEASE_URL=${RELEASE_URL}" >> $GITHUB_OUTPUT
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview-build -->';
+            const dmg = '${{ steps.dmg.outputs.DMG }}';
+            const downloadUrl = '${{ steps.release.outputs.DOWNLOAD_URL }}';
+            const releaseUrl = '${{ steps.release.outputs.RELEASE_URL }}';
+            const sha = context.payload.pull_request.head.sha.slice(0, 7);
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = `${marker}
+            ## 📦 Preview Build
+
+            | | |
+            |---|---|
+            | **Download** | [${dmg}](${downloadUrl}) |
+            | **Commit** | \`${sha}\` |
+            | **Build** | [View run](${runUrl}) |
+
+            > ⚠️ **Unsigned build** — right-click → Open to bypass Gatekeeper on first launch.
+
+            _Updated on every push. Deleted when this PR is closed._`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
 
   cleanup:
     if: github.event.action == 'closed'
@@ -150,3 +185,22 @@ jobs:
             --cleanup-tag \
             --repo "${{ github.repository }}" \
           2>/dev/null || echo "No release found for $TAG — nothing to clean up"
+
+      - name: Delete PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- pr-preview-build -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+              });
+            }
