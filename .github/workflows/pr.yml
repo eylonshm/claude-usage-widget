@@ -137,6 +137,42 @@ jobs:
 
           echo "DMG=${DMG}" >> $GITHUB_OUTPUT
 
+      - name: Verify DMG
+        run: |
+          DMG="dist/${{ steps.dmg.outputs.DMG }}"
+          MOUNT=$(mktemp -d)
+          hdiutil attach "$DMG" -mountpoint "$MOUNT" -nobrowse -quiet
+
+          APP="$MOUNT/Claude Usage.app"
+          WIDGET="$APP/Contents/PlugIns/ClaudeUsageWidgetExtension.appex"
+
+          # 1. App bundle exists
+          [ -d "$APP" ] || { echo "❌ App bundle missing"; hdiutil detach "$MOUNT" -quiet; exit 1; }
+
+          # 2. Widget extension is bundled
+          [ -d "$WIDGET" ] || { echo "❌ Widget extension missing from PlugIns/"; hdiutil detach "$MOUNT" -quiet; exit 1; }
+
+          # 3. NSExtension key present (required for macOS to recognise it as a widget)
+          POINT=$(/usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" \
+            "$WIDGET/Contents/Info.plist" 2>/dev/null)
+          [ "$POINT" = "com.apple.widgetkit-extension" ] || \
+            { echo "❌ NSExtensionPointIdentifier missing or wrong: '$POINT'"; hdiutil detach "$MOUNT" -quiet; exit 1; }
+
+          # 4. Sandbox entitlement is true (required by pkd / pluginkit)
+          # PR builds are unsigned so we read from the source entitlements file
+          # (xcodegen regenerates this from project.yml before the build)
+          SANDBOX=$(/usr/libexec/PlistBuddy -c "Print :com.apple.security.app-sandbox" \
+            ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements 2>/dev/null)
+          [ "$SANDBOX" = "true" ] || \
+            { echo "❌ app-sandbox entitlement is '$SANDBOX', must be true"; hdiutil detach "$MOUNT" -quiet; exit 1; }
+
+          echo "✅ App bundle present"
+          echo "✅ Widget extension bundled"
+          echo "✅ NSExtensionPointIdentifier = $POINT"
+          echo "✅ app-sandbox = $SANDBOX"
+
+          hdiutil detach "$MOUNT" -quiet
+
       - name: Create or update draft release
         id: release
         env:
