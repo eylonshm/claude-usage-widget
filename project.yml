@@ -63,12 +63,14 @@ targets:
     platform: macOS
     sources:
       - ClaudeUsageWidget/Sources
+    info:
+      path: ClaudeUsageWidget/Resources/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.claudeusage.app.widget
-        INFOPLIST_VALUES: >-
-          MACOSX_DEPLOYMENT_TARGET=14.0
-          NSExtension={NSExtensionPointIdentifier=com.apple.widgetkit-extension;}
         CODE_SIGN_ENTITLEMENTS: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "Developer ID Application"
@@ -76,7 +78,6 @@ targets:
         PRODUCT_NAME: ClaudeUsageWidgetExtension
         MARKETING_VERSION: "1.2.20"
         CURRENT_PROJECT_VERSION: "1"
-        GENERATE_INFOPLIST_FILE: true
     entitlements:
       path: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
       properties:
