@@ -30,3 +30,14 @@ open "/Applications/Claude Usage.app"
 Note: always `rm -rf` the old app before copying — a plain `cp -R` over an existing `.app` will silently leave stale files.
 
 **Never push changes before the user confirms the locally installed app is working correctly.**
+
+## Testing via PR build (for widget / signing-dependent features)
+
+Some features (e.g. widget gallery registration) require a properly assembled DMG to test. After creating a PR, use:
+
+```bash
+scripts/install-pr-build.sh          # auto-detects PR from current branch
+scripts/install-pr-build.sh <number> # or pass PR number explicitly
+```
+
+The script waits for the CI workflow to finish, downloads the DMG from the GitHub pre-release, and installs it — same flow as a real user download. Run this after every push that needs PR-level testing.
