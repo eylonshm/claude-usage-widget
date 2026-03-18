@@ -81,7 +81,7 @@ targets:
     entitlements:
       path: ClaudeUsageWidget/Resources/ClaudeUsageWidget.entitlements
       properties:
-        com.apple.security.app-sandbox: false
+        com.apple.security.app-sandbox: true
         com.apple.security.application-groups:
           - group.com.claudeusage.shared
     dependencies:
