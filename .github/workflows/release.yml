@@ -120,7 +120,11 @@ jobs:
       - name: Get version
         id: version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_call" ]; then
+          # When triggered via workflow_call, inputs.version is set by the caller.
+          # When triggered by a tag push, inputs.version is empty — use the tag name.
+          # NOTE: do NOT use github.event_name to detect workflow_call — in reusable workflows
+          # github.event_name is the CALLER's event (e.g. pull_request), never "workflow_call".
+          if [ -n "${{ inputs.version }}" ]; then
             echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
           else
             echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
