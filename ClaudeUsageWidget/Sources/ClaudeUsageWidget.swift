@@ -59,22 +59,21 @@ struct UsageEntry: TimelineEntry {
     let warningThreshold: Double
     let isPlaceholder: Bool
 
+    /// True when there is no stats data for today (all counters are zero).
+    var hasTodayStats: Bool { todayMessages > 0 || todaySessions > 0 || todayToolCalls > 0 }
+
     static let placeholder = UsageEntry(
         date: Date(),
         quota: QuotaData(
-            sessionPercent: 20, sessionResetTime: "2pm",
-            weeklyAllPercent: 5, weeklyAllResetTime: "Mar 22",
-            weeklySonnetPercent: 2, weeklySonnetResetTime: "Mar 23"
+            sessionPercent: 0, sessionResetTime: "—",
+            weeklyAllPercent: 0, weeklyAllResetTime: "—",
+            weeklySonnetPercent: 0, weeklySonnetResetTime: "—"
         ),
-        todayMessages: 1234,
-        todaySessions: 5,
-        todayToolCalls: 189,
-        todayTokens: 45230,
-        modelBreakdowns: [
-            WidgetModelBreakdown(name: "sonnet", displayName: "Sonnet", tokens: 63000, percentage: 63),
-            WidgetModelBreakdown(name: "opus", displayName: "Opus", tokens: 25000, percentage: 25),
-            WidgetModelBreakdown(name: "haiku", displayName: "Haiku", tokens: 12000, percentage: 12),
-        ],
+        todayMessages: 0,
+        todaySessions: 0,
+        todayToolCalls: 0,
+        todayTokens: 0,
+        modelBreakdowns: [],
         warningThreshold: 80,
         isPlaceholder: true
     )
@@ -186,29 +185,41 @@ struct SmallWidgetView: View {
                     .stroke(ringColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .frame(width: 76, height: 76)
                     .rotationEffect(.degrees(-90))
-                VStack(spacing: 1) {
-                    Text("\(entry.quota.sessionPercent)%")
+                if entry.isPlaceholder {
+                    Text("—")
                         .font(.system(size: 20, weight: .bold, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    Text("session")
-                        .font(.system(size: 8, design: .monospaced))
                         .foregroundStyle(.secondary)
+                } else {
+                    VStack(spacing: 1) {
+                        Text("\(entry.quota.sessionPercent)%")
+                            .font(.system(size: 20, weight: .bold, design: .monospaced))
+                            .foregroundStyle(.primary)
+                        Text("session")
+                            .font(.system(size: 8, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
-            Text("Resets \(entry.quota.sessionResetTime)")
-                .font(.system(size: 8, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            if entry.isPlaceholder {
+                Text("Loading…")
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Resets \(entry.quota.sessionResetTime)")
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
 
             Divider().opacity(0.4)
 
             HStack(spacing: 0) {
                 VStack(spacing: 1) {
-                    Text("\(entry.quota.weeklyAllPercent)%")
+                    Text(entry.isPlaceholder ? "—" : "\(entry.quota.weeklyAllPercent)%")
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(Double(entry.quota.weeklyAllPercent) >= entry.warningThreshold
+                        .foregroundStyle((!entry.isPlaceholder && Double(entry.quota.weeklyAllPercent) >= entry.warningThreshold)
                             ? Color.widgetAccent(colorScheme) : Color.primary)
                     Text("weekly")
                         .font(.system(size: 7, design: .monospaced))
@@ -216,17 +227,19 @@ struct SmallWidgetView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                Divider().frame(height: 24).opacity(0.4)
+                if entry.hasTodayStats {
+                    Divider().frame(height: 24).opacity(0.4)
 
-                VStack(spacing: 1) {
-                    Text(widgetFormatCompact(entry.todayMessages))
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    Text("msgs")
-                        .font(.system(size: 7, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    VStack(spacing: 1) {
+                        Text(widgetFormatCompact(entry.todayMessages))
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                            .foregroundStyle(.primary)
+                        Text("msgs")
+                            .font(.system(size: 7, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
             }
         }
         .padding(10)
@@ -262,19 +275,26 @@ struct MediumWidgetView: View {
             }
             .frame(maxWidth: .infinity)
 
-            Divider().opacity(0.4)
+            if entry.isPlaceholder || entry.hasTodayStats {
+                Divider().opacity(0.4)
 
-            // Today stats
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Today")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                StatLine(label: "msgs", value: entry.todayMessages)
-                StatLine(label: "sessions", value: entry.todaySessions)
-                StatLine(label: "tools", value: entry.todayToolCalls)
-                StatLine(label: "tokens", value: entry.todayTokens)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Today")
+                        .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                    if entry.isPlaceholder {
+                        Text("Loading…")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        StatLine(label: "msgs", value: entry.todayMessages)
+                        StatLine(label: "sessions", value: entry.todaySessions)
+                        StatLine(label: "tools", value: entry.todayToolCalls)
+                        StatLine(label: "tokens", value: entry.todayTokens)
+                    }
+                }
+                .frame(width: 88)
             }
-            .frame(width: 88)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -332,22 +352,30 @@ struct LargeWidgetView: View {
             }
             .padding(.bottom, 8)
 
-            widgetDivider
+            if entry.isPlaceholder || entry.hasTodayStats {
+                widgetDivider
 
-            // Today stats
-            Text("Today")
-                .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
+                Text("Today")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
-                statCell("Messages", value: entry.todayMessages)
-                statCell("Sessions", value: entry.todaySessions)
-                statCell("Tool Calls", value: entry.todayToolCalls)
-                statCell("Tokens", value: entry.todayTokens)
+                if entry.isPlaceholder {
+                    Text("Loading…")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 8)
+                } else {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 5) {
+                        statCell("Messages", value: entry.todayMessages)
+                        statCell("Sessions", value: entry.todaySessions)
+                        statCell("Tool Calls", value: entry.todayToolCalls)
+                        statCell("Tokens", value: entry.todayTokens)
+                    }
+                    .padding(.bottom, 8)
+                }
             }
-            .padding(.bottom, 8)
 
             // Model distribution
             if !entry.modelBreakdowns.isEmpty {
