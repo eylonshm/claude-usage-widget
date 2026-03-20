@@ -209,9 +209,13 @@ final class UsageDataService: ObservableObject {
     // MARK: - Widget Data Sharing
 
     private func writeWidgetData() {
-        guard let containerURL = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: AppConstants.appGroupIdentifier
-        ) else { return }
+        // Write into the widget extension's own sandboxed container (Documents/).
+        // The non-sandboxed main app can write here freely; the widget reads via
+        // its standard .documentDirectory — no App Group provisioning required.
+        guard let libraryURL = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else { return }
+        let containerURL = libraryURL
+            .appendingPathComponent("Containers/\(AppConstants.widgetBundleIdentifier)/Data/Documents")
+        try? FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true)
 
         let widgetBreakdowns = modelBreakdowns.map {
             WidgetModelBreakdown(name: $0.name, displayName: $0.displayName, tokens: $0.tokens, percentage: $0.percentage)

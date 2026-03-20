@@ -41,3 +41,11 @@ scripts/install-pr-build.sh <number> # or pass PR number explicitly
 ```
 
 The script waits for the CI workflow to finish, downloads the DMG from the GitHub pre-release, and installs it — same flow as a real user download. Run this after every push that needs PR-level testing.
+
+**When to use PR build instead of local build:**
+
+- Any change touching the widget extension (WidgetKit registration, widget UI, widget data)
+- Any signing-dependent feature
+- Whenever the user says "I can't see the widget in Edit Widgets" — this means the local unsigned build was used; switch to PR build
+
+In these cases: push the branch, open a PR if one doesn't exist, then run `scripts/install-pr-build.sh` automatically — do not wait for the user to ask. The script blocks until CI finishes and installs the signed build.

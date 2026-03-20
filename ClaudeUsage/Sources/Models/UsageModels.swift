@@ -100,6 +100,7 @@ struct WidgetModelBreakdown: Codable, Identifiable {
 
 enum AppConstants {
     static let appGroupIdentifier = "group.com.claudeusage.shared"
+    static let widgetBundleIdentifier = "com.claudeusage.app.widget"
     static let widgetDataFilename = "widget-data.json"
     static let widgetKind = "ClaudeUsageWidget"
 }
