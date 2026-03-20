@@ -20,9 +20,12 @@ struct UsageTimelineProvider: TimelineProvider {
     }
 
     private func loadEntry() -> UsageEntry? {
-        guard let containerURL = FileManager.default.containerURL(
+        // containerURL works when the App Group is formally provisioned; fall back to
+        // the direct path for Developer-ID builds without a provisioning profile.
+        let containerURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: "group.com.claudeusage.shared"
-        ) else { return nil }
+        ) ?? FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Group Containers/group.com.claudeusage.shared")
 
         let fileURL = containerURL.appendingPathComponent("widget-data.json")
         guard let data = try? Data(contentsOf: fileURL),
