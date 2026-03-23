@@ -1,6 +1,6 @@
 # Claude Meter
 
-A native macOS menu bar app that shows your Claude Code usage and quota data — styled to match the Claude Code CLI aesthetic.
+A native macOS menu bar app that tracks your [Claude Code](https://claude.ai/code) session quota, weekly usage, and token breakdown — all without any API keys or account setup. Just install and go.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
@@ -19,11 +19,13 @@ A native macOS menu bar app that shows your Claude Code usage and quota data —
 
 ## Features
 
-- **Menu bar** — Weekly quota percentage always visible; click for a full dropdown with quota bars, today's stats, and model breakdown
-- **Desktop widgets** — Small (quota ring), Medium (quota bars + stats), Large (full dashboard)
-- **Settings window** — Usage overview, model breakdown, lifetime totals, and full customization
-- **Auto-updates** — Built-in Sparkle updater keeps the app current
-- **No cloud** — Reads local `~/.claude/stats-cache.json` and runs `claude /usage` directly; no API keys or OAuth needed
+- **Menu bar icon** — Shows your weekly quota % at a glance; click for a full dropdown with session quota, weekly usage, and model breakdown
+- **Session countdown** — Alerts you when your current session is about to reset
+- **Desktop widgets** — Small (quota ring), Medium (quota bars + model stats), Large (full dashboard) — add them via right-click → Edit Widgets
+- **Model breakdown** — See token usage split across Opus, Sonnet, and Haiku
+- **Lifetime stats** — Total messages, sessions, and member-since date
+- **Auto-updates** — Built-in updater keeps the app current silently in the background
+- **Fully local** — Reads `~/.claude/stats-cache.json` and calls the Claude Code CLI directly; no API keys, no OAuth, no accounts
 
 ## Requirements
 
@@ -45,9 +47,7 @@ Homebrew handles Gatekeeper automatically — no extra steps needed.
 **[Download latest DMG](https://github.com/eylonshm/claude-meter/releases/latest)**
 
 1. Open the DMG and drag **Claude Meter** to your Applications folder
-2. On first launch, macOS will block the app (it's unsigned). To open it:
-   - **Easiest**: Right-click the app in Finder → **Open** → **Open**
-   - **Terminal**: `xattr -cr /Applications/Claude\ Meter.app`
+2. Launch it from Applications or Spotlight — macOS may ask you to confirm opening it the first time
 
 ### Option 3: Build from Source
 
@@ -63,10 +63,11 @@ Build and run with `Cmd+R`.
 
 ## Getting Started
 
-1. The app appears as a **sparkle icon** in the menu bar showing your weekly quota %
-2. Click the icon to see the full usage dropdown
-3. Add desktop widgets: right-click desktop → Edit Widgets → search "Claude Meter"
-4. Click the gear icon in the dropdown to open Settings
+1. **Launch Claude Meter** from Applications or Spotlight — it runs as a menu bar app with no dock icon
+2. Look for a **small circle icon** (⊙) in your menu bar — this is Claude Meter. Click it to see your usage dropdown
+3. If you don't see it right away, make sure the app is running (check via Spotlight or Activity Monitor)
+4. To add **desktop widgets**: right-click the desktop → Edit Widgets → search "Claude Meter"
+5. Click the **gear icon** in the dropdown to open Settings and configure refresh interval, colors, and more
 
 ## Configuration
 
