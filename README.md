@@ -9,9 +9,12 @@ A native macOS menu bar app that shows your Claude Code usage and quota data —
 ## Screenshots
 
 <p align="center">
-  <img src="docs/claudeUsageExample1.png" width="300" alt="Settings window" />
-  <img src="docs/ClaudeUsageExampleTwo.png" width="220" alt="Menu bar dropdown" />
-  <img src="docs/ClaudeWidgetExampleThree.png" width="420" alt="Desktop widgets" />
+  <img src="docs/claudeUsageExample1.png" width="580" alt="Settings window" />
+</p>
+<p align="center">
+  <img src="docs/ClaudeUsageExampleTwo.png" height="380" alt="Menu bar dropdown" />
+  &nbsp;&nbsp;
+  <img src="docs/ClaudeWidgetExampleThree.png" height="380" alt="Desktop widgets" />
 </p>
 
 ## Features
