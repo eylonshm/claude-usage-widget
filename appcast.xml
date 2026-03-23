@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
   <channel>
-    <title>Claude Meter</title>
+    <title>Claude Meter Widget</title>
     <item>
-      <title>Version 1.2.27</title>
-      <sparkle:version>1.2.27</sparkle:version>
-      <sparkle:shortVersionString>1.2.27</sparkle:shortVersionString>
+      <title>Version 1.2.28</title>
+      <sparkle:version>1.2.28</sparkle:version>
+      <sparkle:shortVersionString>1.2.28</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <pubDate>Fri, 20 Mar 2026 10:50:54 +0000</pubDate>
+      <pubDate>Mon, 23 Mar 2026 18:32:39 +0000</pubDate>
       <enclosure
-        url="https://github.com/eylonshm/claude-usage-widget/releases/download/v1.2.27/ClaudeUsage-1.2.27.dmg"
-        sparkle:edSignature="OPUVqPpOfloY7c3uKl4XArUMbge0HGPUDJbGBYLIIr760PZ40gEpFixSRRS42u2jiHnOGOgQ1EytesnNdMP0Bg=="
-        length="2118604"
+        url="https://github.com/eylonshm/claude-meter/releases/download/v1.2.28/ClaudeMeter-1.2.28.dmg"
+        sparkle:edSignature="/T3BlSI6sjtt+FFldPevEezsdpalv6qwR8PApxrXIAImBz5KG4TYOXV+Y9GFGjmKFtWqdzuyrYLDJx5ZLXecAQ=="
+        length="2118696"
         type="application/octet-stream"/>
     </item>
   </channel>
