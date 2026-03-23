@@ -237,10 +237,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp appcast.xml /tmp/appcast-new.xml
+          git fetch origin main
+          git checkout main
+          git pull origin main
+          cp /tmp/appcast-new.xml appcast.xml
           git add appcast.xml
           git commit -m "chore: update appcast for v${{ steps.version.outputs.VERSION }}"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          git push origin main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
