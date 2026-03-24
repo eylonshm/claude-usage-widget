@@ -112,6 +112,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             LoginItemManager.setEnabled(true)
         }
 
+        // Ensure the widget extension is registered with pluginkit.
+        // pkd can miss rescanning after upgrades/reinstalls, so we force it on every launch.
+        if let pluginsPath = Bundle.main.builtInPlugInsPath {
+            let widgetPath = "\(pluginsPath)/ClaudeMeterWidgetExtension.appex"
+            let task = Process()
+            task.launchPath = "/usr/bin/pluginkit"
+            task.arguments = ["-a", widgetPath]
+            try? task.run()
+        }
+
         // Start polling immediately
         Task { @MainActor in
             await UsageDataService.shared.refresh()
