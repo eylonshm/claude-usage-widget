@@ -117,6 +117,9 @@ final class QuotaFetcher {
             for entry in sorted {
                 guard !entry.contains("."), !entry.contains("worktree") else { continue }
                 let decoded = entry.replacingOccurrences(of: "-", with: "/")
+                // Skip home dir itself — Claude scans it on startup which takes too
+                // long, causing /usage to be sent before the TUI is ready.
+                guard decoded != home else { continue }
                 guard !tccProtected.contains(where: { decoded.hasPrefix($0) }) else { continue }
                 if fm.fileExists(atPath: decoded) {
                     return decoded
